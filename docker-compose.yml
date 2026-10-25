@@ -1,0 +1,18 @@
+services:
+  api:
+    restart: no
+    build:
+      context: ./api
+    container_name: healstrata-api
+    expose:
+      - "8000"
+
+  web:
+    restart: no
+    build:
+      context: ./web
+    container_name: healstrata-web
+    ports:
+      - "80:80"
+    depends_on:
+      - api

@@ -1,0 +1,5 @@
+/*
+ * Global, base, and component styles live in App.css, which is fully
+ * self-contained (font import, resets, design tokens, and body styles
+ * included). This file is intentionally empty; main.tsx still imports it.
+ */

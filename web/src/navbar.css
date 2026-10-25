@@ -1,0 +1,114 @@
+/* Self-contained: the navbar is shared across pages with different themes,
+   so it carries its own dark/glass palette instead of relying on tokens
+   defined by whichever page happens to mount it. */
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+}
+
+/* Backdrop that fades in once the page is scrolled, so the logo and buttons
+   stay legible over page content (especially on narrow screens). */
+.navbar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: rgba(13, 21, 9, 0.72);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  backdrop-filter: blur(12px) saturate(1.2);
+  opacity: 0;
+  transition: opacity 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+.navbar.is-scrolled::before {
+  opacity: 1;
+}
+
+.navbar-logo-btn {
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  background: none;
+  line-height: 0;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.navbar-logo-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(124, 195, 92, 0.32);
+}
+
+.navbar-logo {
+  height: 4rem;
+  width: auto;
+  display: block;
+}
+
+.navbar-actions {
+  display: flex;
+  gap: 0.55rem;
+}
+
+.navbar-btn {
+  height: 2.3rem;
+  padding: 0 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(19, 28, 15, 0.86);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  color: #f2f5ee;
+  font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  font-weight: 600;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.16s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.16s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.16s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.navbar-btn:hover {
+  border-color: #7cc35c;
+  background: rgba(124, 195, 92, 0.12);
+  color: #7cc35c;
+}
+
+.navbar-btn:focus-visible {
+  outline: none;
+  border-color: #7cc35c;
+  box-shadow: 0 0 0 3px rgba(124, 195, 92, 0.32);
+}
+
+@media (max-width: 560px) {
+  .navbar {
+    padding: 0.85rem;
+  }
+
+  .navbar-logo {
+    height: 3.4rem;
+  }
+
+  .navbar-btn {
+    height: 2.1rem;
+    padding: 0 0.8rem;
+    font-size: 0.68rem;
+  }
+}

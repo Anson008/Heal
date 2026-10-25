@@ -1,0 +1,18 @@
+services:
+  api:
+    restart: unless-stopped
+    image: ghcr.io/healstrata-tech/healstrata-api:dev
+    container_name: healstrata-dev-api
+    env_file:
+      - /opt/healstrata/secrets.env
+    environment:
+      DOWNLOAD_MODELS: "true"
+
+  web:
+    restart: unless-stopped
+    image: ghcr.io/healstrata-tech/healstrata-web:dev
+    container_name: healstrata-dev-web
+    ports: !override
+      - "8080:80"
+    volumes:
+      - /opt/healstrata/deploy/nginx.dev.conf:/etc/nginx/conf.d/default.conf:ro

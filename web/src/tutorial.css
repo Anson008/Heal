@@ -1,0 +1,167 @@
+/* Self-contained onboarding walkthrough overlay. Dims the page and spotlights
+   one form section at a time. Uses the palette tokens from App.css. */
+
+/* Applied to <html> while the walkthrough is active: no user scrolling in any
+   direction. Programmatic scrollIntoView still works. */
+.tut-lock,
+.tut-lock body {
+  overflow: hidden !important;
+}
+
+.tut {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  /* The container lets clicks through; the blockers / card / scrim below
+     re-enable pointer events where interaction should be captured, leaving the
+     spotlighted hole usable. */
+  pointer-events: none;
+}
+
+/* Full-screen dim used when a step's target can't be found. */
+.tut-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 10, 4, 0.74);
+  pointer-events: auto;
+  animation: tut-fade 0.2s var(--ease) both;
+}
+
+/* Invisible click-catchers framing the spotlight; the dimming itself comes
+   from the spotlight's spread shadow. */
+.tut-block {
+  position: fixed;
+  pointer-events: auto;
+}
+
+/* The cut-out: a transparent box whose enormous spread shadow dims everything
+   around it, leaving the target element visible and bright. */
+.tut-spotlight {
+  position: fixed;
+  border-radius: var(--radius);
+  box-shadow: 0 0 0 9999px rgba(6, 10, 4, 0.74);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  pointer-events: none;
+  transition: top 0.3s var(--ease), left 0.3s var(--ease),
+    width 0.3s var(--ease), height 0.3s var(--ease);
+}
+
+.tut-card {
+  position: fixed;
+  width: min(340px, calc(100vw - 2.5rem));
+  background: var(--panel-solid);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  padding: 1.15rem 1.2rem 1.05rem;
+  box-shadow: var(--shadow-pop);
+  font-family: var(--sans);
+  pointer-events: auto;
+  animation: tut-fade 0.18s var(--ease) both;
+}
+
+.tut-card.is-above {
+  transform: translateY(-100%);
+}
+
+/* A small nub near the card's right edge that points toward the highlighted
+   area: downward when the card sits above it, upward when it sits below. */
+.tut-card::after {
+  content: "";
+  position: absolute;
+  right: 20px;
+  width: 14px;
+  height: 14px;
+  background: var(--panel-solid);
+  border: 1px solid var(--line-strong);
+  transform: rotate(45deg);
+}
+
+.tut-card.is-above::after {
+  bottom: -8px;
+  border-top: none;
+  border-left: none;
+}
+
+.tut-card:not(.is-above)::after {
+  top: -8px;
+  border-bottom: none;
+  border-right: none;
+}
+
+@keyframes tut-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.tut-step {
+  margin: 0 0 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  color: var(--ink-faint);
+}
+
+.tut-title {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.tut-body {
+  margin: 0 0 1.1rem;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.tut-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.tut-skip {
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition: color 0.16s var(--ease);
+}
+
+.tut-skip:hover {
+  color: var(--ink-soft);
+}
+
+.tut-next {
+  padding: 0.5rem 1.15rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: var(--sans);
+  color: var(--accent-ink);
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  box-shadow: 0 4px 12px -6px rgba(0, 0, 0, 0.5);
+  transition: filter 0.16s var(--ease);
+}
+
+.tut-next:hover {
+  filter: brightness(1.06);
+}
+
+.tut-skip:focus-visible,
+.tut-next:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}

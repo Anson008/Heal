@@ -1,0 +1,167 @@
+name: Build and Publish Docker Images
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push API image (prod)
+        if: github.ref_name == 'main'
+        uses: docker/build-push-action@v6
+        with:
+          context: ./api
+          push: true
+          platforms: linux/arm64
+          tags: |
+            ghcr.io/healstrata-tech/healstrata-api:prod
+            ghcr.io/healstrata-tech/healstrata-api:latest
+            ghcr.io/healstrata-tech/healstrata-api:${{ github.sha }}
+          cache-from: type=registry,ref=ghcr.io/healstrata-tech/healstrata-api:buildcache-prod
+          cache-to: type=registry,ref=ghcr.io/healstrata-tech/healstrata-api:buildcache-prod,mode=max
+
+      - name: Build and push API image (dev)
+        if: github.ref_name == 'dev'
+        uses: docker/build-push-action@v6
+        with:
+          context: ./api
+          push: true
+          platforms: linux/arm64
+          tags: |
+            ghcr.io/healstrata-tech/healstrata-api:dev
+            ghcr.io/healstrata-tech/healstrata-api:${{ github.sha }}
+          cache-from: type=registry,ref=ghcr.io/healstrata-tech/healstrata-api:buildcache-dev
+          cache-to: type=registry,ref=ghcr.io/healstrata-tech/healstrata-api:buildcache-dev,mode=max
+
+      - name: Build and push Web image (prod)
+        if: github.ref_name == 'main'
+        uses: docker/build-push-action@v6
+        with:
+          context: ./web
+          push: true
+          platforms: linux/arm64
+          tags: |
+            ghcr.io/healstrata-tech/healstrata-web:prod
+            ghcr.io/healstrata-tech/healstrata-web:latest
+            ghcr.io/healstrata-tech/healstrata-web:${{ github.sha }}
+          cache-from: type=registry,ref=ghcr.io/healstrata-tech/healstrata-web:buildcache-prod
+          cache-to: type=registry,ref=ghcr.io/healstrata-tech/healstrata-web:buildcache-prod,mode=max
+
+      - name: Build and push Web image (dev)
+        if: github.ref_name == 'dev'
+        uses: docker/build-push-action@v6
+        with:
+          context: ./web
+          push: true
+          platforms: linux/arm64
+          tags: |
+            ghcr.io/healstrata-tech/healstrata-web:dev
+            ghcr.io/healstrata-tech/healstrata-web:${{ github.sha }}
+          cache-from: type=registry,ref=ghcr.io/healstrata-tech/healstrata-web:buildcache-dev
+          cache-to: type=registry,ref=ghcr.io/healstrata-tech/healstrata-web:buildcache-dev,mode=max
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install cloudflared
+        run: |
+          curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | \
+            sudo tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
+
+          echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main" | \
+            sudo tee /etc/apt/sources.list.d/cloudflared.list
+
+          sudo apt-get update
+          sudo apt-get install -y cloudflared
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+          cat > ~/.ssh/config <<EOF
+          Host healstrata
+              HostName ${{ secrets.VPS_HOST }}
+              User ${{ secrets.VPS_USER }}
+              IdentityFile ~/.ssh/id_ed25519
+              StrictHostKeyChecking no
+              ProxyCommand cloudflared access ssh --hostname %h
+          EOF
+
+      - name: Deploy
+        env:
+          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+          GHCR_PAT: ${{ secrets.GHCR_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="${{ github.ref_name }}"
+
+          ssh healstrata << EOF
+            set -e
+
+            cd /opt/healstrata
+
+            mkdir -p deploy
+
+            curl -fsSL -H "Authorization: token $GITHUB_TOKEN" \
+              https://raw.githubusercontent.com/healstrata-tech/healstrata/$BRANCH/docker-compose.yml -o docker-compose.yml
+
+            curl -fsSL -H "Authorization: token $GITHUB_TOKEN" \
+              https://raw.githubusercontent.com/healstrata-tech/healstrata/$BRANCH/deploy/docker-compose.override.prod.yml -o deploy/docker-compose.override.prod.yml
+
+            curl -fsSL -H "Authorization: token $GITHUB_TOKEN" \
+              https://raw.githubusercontent.com/healstrata-tech/healstrata/$BRANCH/deploy/docker-compose.override.dev.yml -o deploy/docker-compose.override.dev.yml
+
+            curl -fsSL -H "Authorization: token $GITHUB_TOKEN" \
+              https://raw.githubusercontent.com/healstrata-tech/healstrata/$BRANCH/deploy/nginx.prod.conf -o deploy/nginx.prod.conf
+
+            curl -fsSL -H "Authorization: token $GITHUB_TOKEN" \
+              https://raw.githubusercontent.com/healstrata-tech/healstrata/$BRANCH/deploy/nginx.dev.conf -o deploy/nginx.dev.conf
+
+            curl -fsSL -H "Authorization: token $GITHUB_TOKEN" \
+              https://raw.githubusercontent.com/healstrata-tech/healstrata/$BRANCH/sync-secrets.sh -o sync-secrets.sh
+
+            chmod +x sync-secrets.sh
+            ./sync-secrets.sh
+
+            echo "$GHCR_PAT" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+            trap 'docker logout ghcr.io' EXIT
+
+            if [ "$BRANCH" = "main" ]; then
+              docker compose -p healstrata-prod -f docker-compose.yml -f deploy/docker-compose.override.prod.yml pull
+              docker compose -p healstrata-prod -f docker-compose.yml -f deploy/docker-compose.override.prod.yml up -d --remove-orphans
+            else
+              docker compose -p healstrata-dev -f docker-compose.yml -f deploy/docker-compose.override.dev.yml pull
+              docker compose -p healstrata-dev -f docker-compose.yml -f deploy/docker-compose.override.dev.yml up -d --remove-orphans
+            fi
+
+            docker image prune -af
+          EOF

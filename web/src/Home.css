@@ -1,0 +1,287 @@
+/* Home Page Styles */
+
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Inter:wght@400;500&display=swap");
+
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Inter:wght@400;500&display=swap");
+
+@import url("https://googleapis.com");
+
+:root {
+  --main-font: "Ubuntu", system-ui, sans-serif;
+  --green-main: #659251;
+  --black-main: #050505;
+  --white-main: #ffffff;
+  --border: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--main-font);
+}
+
+.page {
+  position: relative;
+  min-height: 100vh;
+  color: var(--white-main);
+  font-family: var(--main-font);
+}
+
+/* Fixed behind everything so it stays put while the page scrolls.
+   Extra height (120%) gives the parallax translate room to move
+   without exposing an edge. */
+.page__bg {
+  position: fixed;
+  top: -10%;
+  left: 0;
+  width: 100%;
+  height: 120%;
+  object-fit: cover;
+  z-index: -2;
+  will-change: transform;
+}
+
+.page__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    100deg,
+    rgba(10, 10, 8, 0.72) 0%,
+    rgba(10, 10, 8, 0.45) 45%,
+    rgba(10, 10, 8, 0.25) 100%
+  );
+}
+
+.hero__header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2rem 3rem;
+}
+
+.hero__mark {
+  color: var(--green-main);
+  text-decoration: none;
+  font-family: var(--main-font);
+  font-size: 1.1rem;
+  letter-spacing: 0.01em;
+}
+
+.hero__nav ul {
+  list-style: none;
+  display: flex;
+  gap: 2.25rem;
+  margin: 0;
+  padding: 0;
+}
+
+.hero__nav a {
+  color: var(--white-main);
+  text-decoration: none;
+  font-size: 0.95rem;
+  padding-bottom: 0.2rem;
+  border-bottom: 0.02rem solid transparent;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.hero__content {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem 3rem 6rem;
+  max-width: 34rem;
+}
+
+.hero__content::before {
+  content: "";
+  display: block;
+  height: 1.5rem;
+  width: 25%;
+  background: var(--green-main);
+  margin-bottom: 2rem;
+}
+
+.hero__title {
+  font-family: var(--);
+  font-weight: 500;
+  font-size: clamp(3rem, 5vw, 4rem);
+  line-height: 1.08;
+  margin: 0 0 1.25rem;
+  color: var(--white-main);
+  text-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.5);
+  text-align: center;
+}
+
+.hero__subtitle {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--green-main);
+  margin: 0 0 2rem;
+  max-width: 30ch;
+}
+
+/* Mirrors the "Run prediction" button in the HEAL tool (App.css .submit),
+   minus the resting drop-glow shadow, using this page's green. */
+.hero__cta {
+  align-self: flex-end;
+  margin-top: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.75rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  color: var(--white-main);
+  background: var(--green-main);
+  border: none;
+  border-radius: 9px;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    filter 0.16s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.08s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.hero__cta:hover,
+.hero__cta:focus-visible {
+  filter: brightness(1.08);
+}
+
+.hero__cta:active {
+  transform: translateY(1px) scale(0.995);
+}
+
+.hero__cta:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(101, 146, 81, 0.4);
+}
+
+.page__section {
+  position: relative;
+  z-index: 2;
+  padding: 6rem 3rem;
+  background: var(--black-main);
+}
+
+h2 {
+  font-family: var(--main-font);
+  font-weight: 2rem;
+  font-size: 2.5rem;
+  margin: 0 0 1rem;
+}
+
+.page__section p {
+  max-width: 40ch;
+  margin: 0;
+}
+
+.section_break {
+  padding-top: 2rem;
+}
+
+.section_break::before {
+  content: "";
+  display: block;
+  height: 0.3rem;
+  background: var(--green-main);
+  margin-bottom: 2rem;
+}
+
+.section_break__title {
+  color: var(--green-main);
+}
+
+.section_break__description {
+  color: var(--white-main);
+  font-size: 1.25rem;
+  font-style: italic;
+  padding: 0.5rem 0 0.5rem;
+}
+
+.contact_title {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  font-style: normal;
+  font-weight: 600;
+  color: var(--green-main);
+}
+
+.contact_list {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(1.5rem, 5vw, 4rem);
+  margin-top: 1.5rem;
+}
+
+.contact_person {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.contact_name {
+  margin: 0;
+  color: var(--white-main);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.contact_email {
+  display: inline-block;
+  margin-top: 0.65rem;
+  color: var(--white-main);
+  font-size: 0.6rem;
+  overflow-wrap: anywhere;
+}
+
+.contact_email:hover,
+.contact_email:focus-visible {
+  color: var(--green-main);
+}
+
+@media (max-width: 640px) {
+  .hero__header {
+    padding: 1.5rem;
+  }
+
+  .hero__nav ul {
+    gap: 1.25rem;
+  }
+
+  .hero__content {
+    padding: 1.5rem 1.5rem 4rem;
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+
+  .page__section {
+    padding: 4rem 1.5rem;
+  }
+
+  .contact_list {
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__nav a,
+  .hero__cta {
+    transition: none;
+  }
+
+  .page__bg {
+    transform: none !important;
+  }
+}
