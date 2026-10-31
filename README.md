@@ -180,6 +180,21 @@ This project is ongoing! To contribute, please follow the steps below:
     docker compose up
     ```
 
+# Desktop App
+
+The desktop app runs the same API and UI offline inside a native window (PyWebView). The installer bundles the models, so no network is needed at runtime. Requires Python 3.13+, [uv](https://docs.astral.sh/uv/) and Node.
+
+```bash
+cd web && npm ci && npm run build:desktop            # UI -> web/dist
+cd ../api
+uv sync --group desktop --no-group training
+HF_TOKEN=... uv run python desktop/fetch_models.py   # models -> api/models
+uv run python desktop/app.py                         # run from source
+uv run pyinstaller desktop/heal_tool.spec            # package (build on each target OS)
+```
+
+Logs are written to the per-user log directory (`%LOCALAPPDATA%\HEALTool\Logs` on Windows, `~/Library/Logs/HEALTool` on macOS) when running without a console.
+
 # File Structure
 
 ```
