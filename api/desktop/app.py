@@ -139,6 +139,12 @@ def main() -> None:
     url = f"http://127.0.0.1:{port}"
     wait_until_ready(url, thread)
 
+    # CI runs the packaged app headlessly to prove the bundle starts and loads models.
+    if os.environ.get("HEALTOOL_SMOKE_TEST"):
+        server.should_exit = True
+        thread.join(timeout=5)
+        return
+
     window = webview.create_window(
         "HEAL Tool", url, js_api=Api(), width=1280, height=860, min_size=(900, 600)
     )

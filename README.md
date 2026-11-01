@@ -195,6 +195,20 @@ uv run pyinstaller desktop/heal_tool.spec            # package (build on each ta
 
 Logs are written to the per-user log directory (`%LOCALAPPDATA%\HEALTool\Logs` on Windows, `~/Library/Logs/HEALTool` on macOS) when running without a console.
 
+## Releases
+
+Pushing a tag such as `v0.1.0` runs [desktop-release.yml](.github/workflows/desktop-release.yml), which builds on Windows, smoke-tests the packaged app, and publishes a GitHub Release with:
+
+- `HEALTool-Setup-<version>.exe` (Windows installer, per-user, no admin rights needed)
+- `HEALTool-<version>-windows-portable.zip`
+- `checksums.txt` (SHA-256)
+
+The workflow needs the `HF_TOKEN` repository secret to bundle the models. Once SignPath Foundation approves the project, set the repository variables `SIGNPATH_ENABLED=true` and `SIGNPATH_ORGANIZATION_ID` and the secret `SIGNPATH_API_TOKEN` to sign the Windows installer. Test builds can be started from the Actions tab (no release is published).
+
+## Installing an unsigned build
+
+Until the installer is signed, Windows shows "Windows protected your PC" on first launch. Click **More info**, then **Run anyway**. Only Windows builds are published.
+
 # File Structure
 
 ```

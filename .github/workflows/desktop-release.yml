@@ -1,0 +1,145 @@
+name: Build Desktop App
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version for a test build (no release is published)
+        default: "0.1.0"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="${{ inputs.version }}"
+          fi
+          echo "HEAL_VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: api/uv.lock
+
+      - name: Build web UI
+        working-directory: web
+        run: |
+          npm ci
+          npm run build:desktop
+
+      - name: Install Python dependencies
+        working-directory: api
+        run: uv sync --group desktop --no-group training
+
+      - name: Fetch models
+        working-directory: api
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: uv run python desktop/fetch_models.py
+
+      - name: Package with PyInstaller
+        working-directory: api
+        run: uv run pyinstaller desktop/heal_tool.spec --noconfirm
+
+      - name: Smoke test packaged app
+        working-directory: api
+        timeout-minutes: 5
+        env:
+          HEALTOOL_SMOKE_TEST: "1"
+        run: dist/HEALTool/HEALTool.exe
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+
+      - name: Build installer
+        working-directory: api
+        run: |
+          "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" "//DAppVersion=$HEAL_VERSION" desktop/installer/heal_tool.iss
+
+      - name: Build portable zip
+        working-directory: api/dist
+        shell: pwsh
+        run: Compress-Archive -Path HEALTool -DestinationPath "HEALTool-$env:HEAL_VERSION-windows-portable.zip"
+
+      # Code signing via SignPath Foundation; enable by setting the repository
+      # variable SIGNPATH_ENABLED=true once the certificate is approved, and
+      # add the SIGNPATH_API_TOKEN secret and SIGNPATH_ORGANIZATION_ID variable.
+      - name: Upload unsigned installer for signing
+        if: vars.SIGNPATH_ENABLED == 'true'
+        id: unsigned
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer-unsigned
+          path: api/dist/HEALTool-Setup-${{ env.HEAL_VERSION }}.exe
+
+      - name: Sign installer with SignPath
+        if: vars.SIGNPATH_ENABLED == 'true'
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: healstrata
+          signing-policy-slug: release-signing
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: api/dist/signed
+
+      - name: Replace installer with signed copy
+        if: vars.SIGNPATH_ENABLED == 'true'
+        run: mv -f api/dist/signed/*.exe api/dist/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: |
+            api/dist/HEALTool-Setup-*.exe
+            api/dist/HEALTool-*-windows-portable.zip
+
+  release:
+    if: github.ref_type == 'tag'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create checksums
+        working-directory: artifacts
+        run: sha256sum HEALTool-* > checksums.txt
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" artifacts/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "HEAL Tool ${GITHUB_REF_NAME}" \
+            --generate-notes
