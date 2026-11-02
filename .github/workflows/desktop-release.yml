@@ -73,12 +73,16 @@ jobs:
         run: dist/HEALTool/HEALTool.exe
 
       - name: Install Inno Setup
-        run: choco install innosetup -y --no-progress
+        shell: pwsh
+        run: |
+          Invoke-WebRequest "https://github.com/jrsoftware/issrc/releases/download/is-7_1_1/innosetup-7.1.1-x64.exe" -OutFile is.exe
+          Start-Process .\is.exe -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART","/ALLUSERS" -Wait
 
       - name: Build installer
         working-directory: api
+        shell: pwsh
         run: |
-          "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" "//DAppVersion=$HEAL_VERSION" desktop/installer/heal_tool.iss
+          & "$env:ProgramFiles\Inno Setup 7\ISCC.exe" "/DAppVersion=$env:HEAL_VERSION" desktop/installer/heal_tool.iss
 
       - name: Build portable zip
         working-directory: api/dist

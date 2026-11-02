@@ -1,6 +1,7 @@
 # Python
 __pycache__/
 models/
+build/
 
 # Logs
 logs

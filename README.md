@@ -195,7 +195,17 @@ uv run pyinstaller desktop/heal_tool.spec            # package (build on each ta
 
 Logs are written to the per-user log directory (`%LOCALAPPDATA%\HEALTool\Logs` on Windows, `~/Library/Logs/HEALTool` on macOS) when running without a console.
 
-## Releases
+## Local build (Windows)
+
+Install Node, [uv](https://docs.astral.sh/uv/) and [Inno Setup 7](https://jrsoftware.org/isdl.php) (version 6 also works), then run from the repo root:
+
+```powershell
+.\build-desktop.ps1 -Version 0.1.0
+```
+
+It builds the UI, packages the app, smoke-tests it, and writes `HEALTool-Setup-<version>.exe`, `HEALTool-<version>-windows-portable.zip` and `checksums.txt` to `api\dist`. Models come from `api\models`; if that folder is missing the script downloads them (set `HF_TOKEN`), and `-FetchModels` forces a fresh download. Use `-SkipSmokeTest` to skip the headless start-up check.
+
+## Releases (GitHub Actions, optional)
 
 Pushing a tag such as `v0.1.0` runs [desktop-release.yml](.github/workflows/desktop-release.yml), which builds on Windows, smoke-tests the packaged app, and publishes a GitHub Release with:
 

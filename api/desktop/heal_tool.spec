@@ -3,7 +3,7 @@
 import sys
 from pathlib import Path
 
-from PyInstaller.utils.hooks import collect_submodules
+from PyInstaller.utils.hooks import collect_submodules, copy_metadata
 
 api_dir = Path(SPECPATH).parent
 web_dist = api_dir.parent / "web" / "dist"
@@ -16,7 +16,13 @@ for required in (web_dist / "index.html", models):
 a = Analysis(
     [str(api_dir / "desktop" / "app.py")],
     pathex=[str(api_dir / "src")],
-    datas=[(str(web_dist), "web"), (str(models), "models")],
+    # artifacts.py reads these versions via importlib.metadata at startup.
+    datas=[(str(web_dist), "web"), (str(models), "models")]
+    + [
+        item
+        for package in ("numpy", "scipy", "scikit-learn", "joblib")
+        for item in copy_metadata(package)
+    ],
     hiddenimports=(
         collect_submodules("service")
         + collect_submodules("uvicorn")
