@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import logoUrl from "./assets/HEALstrata_Logo_white.svg";
 import { useNavigate } from "./Router";
 const API_DOCS_URL = "/api/docs";
+// Set by `npm run build:desktop`; the desktop server does not expose the docs.
+const IS_DESKTOP = import.meta.env.VITE_DESKTOP === "true";
 import "./navbar.css";
 
 const MORE_INFO_URL =
@@ -42,14 +44,16 @@ function Navbar({ onFeedback }: { onFeedback: () => void }) {
         >
           More info
         </a>
-        <a
-          href={API_DOCS_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="navbar-btn"
-        >
-          API docs
-        </a>
+        {!IS_DESKTOP && (
+          <a
+            href={API_DOCS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="navbar-btn"
+          >
+            API docs
+          </a>
+        )}
       </div>
     </nav>
   );

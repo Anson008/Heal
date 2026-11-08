@@ -180,6 +180,45 @@ This project is ongoing! To contribute, please follow the steps below:
     docker compose up
     ```
 
+# Desktop App
+
+The desktop app runs the same API and UI offline inside a native window (PyWebView). The installer bundles the models, so no network is needed at runtime. Requires Python 3.13+, [uv](https://docs.astral.sh/uv/) and Node.
+
+```bash
+cd web && npm ci && npm run build:desktop            # UI -> web/dist
+cd ../api
+uv sync --group desktop --no-group training
+HF_TOKEN=... uv run python desktop/fetch_models.py   # models -> api/models
+uv run python desktop/app.py                         # run from source
+uv run pyinstaller desktop/heal_tool.spec            # package (build on each target OS)
+```
+
+Logs are written to the per-user log directory (`%LOCALAPPDATA%\HEALTool\Logs` on Windows, `~/Library/Logs/HEALTool` on macOS) when running without a console.
+
+## Local build (Windows)
+
+Install Node, [uv](https://docs.astral.sh/uv/) and [Inno Setup 7](https://jrsoftware.org/isdl.php) (version 6 also works), then run from the repo root:
+
+```powershell
+.\build-desktop.ps1 -Version 0.1.0
+```
+
+It builds the UI, packages the app, smoke-tests it, and writes `HEALTool-Setup-<version>.exe`, `HEALTool-<version>-windows-portable.zip` and `checksums.txt` to `api\dist`. Models come from `api\models`; if that folder is missing the script downloads them (set `HF_TOKEN`), and `-FetchModels` forces a fresh download. Use `-SkipSmokeTest` to skip the headless start-up check.
+
+## Releases (GitHub Actions, optional)
+
+Pushing a tag such as `v0.1.0` runs [desktop-release.yml](.github/workflows/desktop-release.yml), which builds on Windows, smoke-tests the packaged app, and publishes a GitHub Release with:
+
+- `HEALTool-Setup-<version>.exe` (Windows installer, per-user, no admin rights needed)
+- `HEALTool-<version>-windows-portable.zip`
+- `checksums.txt` (SHA-256)
+
+The workflow needs the `HF_TOKEN` repository secret to bundle the models. Once SignPath Foundation approves the project, set the repository variables `SIGNPATH_ENABLED=true` and `SIGNPATH_ORGANIZATION_ID` and the secret `SIGNPATH_API_TOKEN` to sign the Windows installer. Test builds can be started from the Actions tab (no release is published).
+
+## Installing an unsigned build
+
+Until the installer is signed, Windows shows "Windows protected your PC" on first launch. Click **More info**, then **Run anyway**. Only Windows builds are published.
+
 # File Structure
 
 ```
